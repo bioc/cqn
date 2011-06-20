@@ -1,0 +1,17 @@
+bibentry("TechReport",
+         title = "{Removing technical variability in RNA-seq data using conditional quantile normalization}",
+         author = c(person(c("Kasper", "D."), "Hansen"),
+         person(c("Rafael", "A."), "Irizarry"),
+         person("Zhijin", "Wu")),
+         year = 2011,
+         institution = "Johns Hopkins, Dept. of Biostatistics",
+         number = "227",
+         type = "Working Paper",
+         url = "http://www.bepress.com/jhubiostat/paper227",
+         textVersion = 
+         paste("KD Hansen, RA Irizarry, and Z Wu,",
+               "Removing technical variability in RNA-seq data using conditional quantile normalization,",
+               "Johns Hopkins, Dept of Biostatistics Working Papers.",
+               "Working Paper 227,", "URL http://www.bepress.com/jhubiostat/paper227"),
+         mheader = "To cite CQN in publications use:"
+         )

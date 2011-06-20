@@ -1,0 +1,3 @@
+export(cqn, cqn.fixedlength, cqnplot)
+import(splines, nor1mix)
+S3method("print", "cqn")

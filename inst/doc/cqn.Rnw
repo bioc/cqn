@@ -1,0 +1,309 @@
+%\VignetteIndexEntry{CQN (Conditional Quantile Normalization)}
+%\VignetteDepends{cqn}
+%\VignetteDepends{ggplot2}
+%\VignettePackage{cqn}
+\documentclass[12pt]{article}
+<<echo=FALSE>>=
+options(width=70)
+@ 
+\SweaveOpts{eps=FALSE,echo=TRUE,png=TRUE,pdf=FALSE,figs.only=TRUE}
+\usepackage{fullpage}
+\usepackage{times}
+\usepackage[colorlinks=TRUE,urlcolor=blue,citecolor=blue]{hyperref}
+
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\texttt{#1}}}
+\newcommand{\Rfunarg}[1]{{\texttt{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rcode}[1]{{\texttt{#1}}}
+\newcommand{\software}[1]{\textsf{#1}}
+\newcommand{\R}{\software{R}}
+
+\title{CQN (Conditional Quantile Normalization)}
+\author{Kasper Daniel Hansen \\ \texttt{khansen@jhsph.edu}
+\and
+Zhijin Wu \\ \texttt{zhijin\_wu@brown.edu}}
+\date{Modified: June 4, 2011.  Compiled: \today}
+\begin{document}
+\setlength{\parskip}{0.2\baselineskip}
+\setlength{\parindent}{0pt}
+\setkeys{Gin}{width=\textwidth}
+\maketitle
+
+\section*{Introduction}
+
+This package contains the CQN (conditional quantile normalization)
+method for normalizing RNA-seq datasets.  This method is described in
+\cite{preprint}.
+
+<<load,results=hide>>=
+library(cqn)
+library(ggplot2)
+@ 
+
+\section*{Data}
+
+As an example we use ten samples from Montgomery \cite{Montgomery}.
+The data has been processed as described in \cite{preprint}.  First we
+have the region by sample count matrix
+
+<<data1>>=
+data(montgomery.subset)
+dim(montgomery.subset)
+montgomery.subset[1:4,1:4]
+colnames(montgomery.subset)
+@ 
+
+Because of (disc) space issues, We have removed all genes that have
+zero counts in all 10 samples.  Next we have the \emph{sizeFactors}
+which simply tells us how deep each sample was sequenced:
+
+<<data2>>=
+data(sizeFactors.subset)
+sizeFactors.subset[1:4]
+@ 
+
+Finally, we have a matrix containing length and GC-content for each
+gene.
+
+<<data3>>=
+data(uCovar)
+head(uCovar)
+@ 
+
+Note that the row ordering of the count matrix is the same as the
+row ordering of the matrix containing length and GC-content and that
+the sizeFactor vector has the same column order as the count matrix.
+We can formally check this
+
+<<checkdata>>=
+stopifnot(all(rownames(montgomery.subset) == rownames(uCovar)))
+stopifnot(colnames(montgomery.subset) == names(sizeFactors.subset))
+@ 
+
+\section*{Normalization}
+
+The methodology is described in \cite{preprint}.  The main workhorse is
+the function \Rfunction{cqn} which fits the following model
+\begin{displaymath}
+  \log_2(\textrm{RPM}) = s(x) + s(\log_2(\textrm{length}))
+\end{displaymath}
+where $x$ is some covariate, $s$ are smooth functions (specifically
+natural cubic splines with 5 knots), and $\textrm{RPM}$ are ``reads
+per millions''.  We also have the function \Rfunction{cqn.fixedlength}
+which fits the model
+\begin{displaymath}
+\log_2(\textrm{RPKM}) = s(x)
+\end{displaymath}
+In this model gene length is included as a known offset.
+
+The basic call to \Rfunction{cqn} is relatively easy, we need the count
+matrix, a vector of lengths, a vector of GC content and a vector of
+sizeFactors.  Make sure that they all have the same ordering.
+
+<<cqncall>>=
+cqn.subset <- cqn(montgomery.subset, lengths = uCovar$length, 
+                  x = uCovar$gccontent, sizeFactors = sizeFactors.subset,
+                  verbose = TRUE)
+cqn.subset
+@ 
+
+This normalized matrix is similar, but not equivalent, to the data
+examined in \cite{preprint}.  The main differences are (1) in
+\cite{preprint} we normalize 60 samples together, not 10 and (2) we
+have removed all genes with zero counts in all 10 samples.
+
+We can examine plots of systematic effects by using \Rfunction{cqnplot}.
+The \Rfunarg{n} argument refers to the systematic effect, \Rfunarg{n=1} is
+always the covariate specified by the \Rfunarg{x} argument above, while
+\Rfunarg{n=2} is lengths.
+
+<<cqnplot1,fig=TRUE,width=8,height=4>>=
+par(mfrow=c(1,2))
+cqnplot(cqn.subset, n = 1, xlab = "GC content", lty = 1, ylim = c(1,7))
+cqnplot(cqn.subset, n = 2, xlab = "length", lty = 1, ylim = c(1,7))
+@ 
+
+The normalized expression values are
+<<normalizedvalues>>=
+RPKM.cqn <- cqn.subset$y + cqn.subset$offset
+RPKM.cqn[1:4,1:4]
+@ 
+These values are on the $\log_2$-scale.
+
+We can do a MA plot of these fold changes, and compare it to fold
+changes based on standard RPKM.  First we compute the standard RPKM
+(on a $\log_2$ scale):
+<<rpkmvalues>>=
+RPM <- sweep(log2(montgomery.subset + 1), 2, log2(sizeFactors.subset/10^6))
+RPKM.std <- sweep(RPM, 1, log2(uCovar$length / 10^3))
+@ 
+
+We now look at differential expression between two groups of samples.
+We use the same grouping as in \cite{preprint}, namely
+<<groups>>=
+grp1 <- c("NA06985", "NA06994", "NA07037", "NA10847", "NA11920")
+grp2 <- c("NA11918", "NA11931", "NA12003", "NA12006", "NA12287")
+@ 
+
+We now do an MA-plot, but we only choose to plot genes with average standard
+$\log_2$-RPKM of $\log_2(5)$ or greater, and we also form the M and A values:
+
+<<whGenes>>=
+whGenes <- which(rowMeans(RPKM.std) >= 2 & uCovar$length >= 100)
+M.std <- rowMeans(RPKM.std[whGenes, grp1]) - rowMeans(RPKM.std[whGenes, grp2])
+A.std <- rowMeans(RPKM.std[whGenes,])
+M.cqn <- rowMeans(RPKM.cqn[whGenes, grp1]) - rowMeans(RPKM.cqn[whGenes, grp2])
+A.cqn <- rowMeans(RPKM.cqn[whGenes,])
+@ 
+
+Now we do the MA plots, with alpha-blending
+
+<<maplots,fig=TRUE,width=8,height=4>>=
+par(mfrow = c(1,2))
+plot(A.std, M.std, cex = 0.5, pch = 16, xlab = "A", ylab = "M", 
+     main = "Standard RPKM", ylim = c(-4,4), xlim = c(0,12), 
+     col = alpha("black", 0.25))
+plot(A.cqn, M.cqn, cex = 0.5, pch = 16, xlab = "A", ylab = "M", 
+     main = "CQN normalized RPKM", ylim = c(-4,4), xlim = c(0,12), 
+     col = alpha("black", 0.25))
+@ 
+
+We can also color the genes according to whether they have high/low
+GC-content.  Here one needs to be careful, because of overplotting.
+One solution is to leave out all genes with intermediate GC content.
+We define high/low GC content as the 10\% most extreme genes:
+
+<<gcmaplots,fig=TRUE,width=8,height=4>>=
+par(mfrow = c(1,2))
+gccontent <- uCovar$gccontent[whGenes]
+whHigh <- which(gccontent > quantile(gccontent, 0.9))
+whLow <- which(gccontent < quantile(gccontent, 0.1))
+plot(A.std[whHigh], M.std[whHigh], cex = 0.2, pch = 16, xlab = "A", ylab = "M", 
+     main = "Standard RPKM", ylim = c(-4,4), xlim = c(0,12), 
+     col = "red")
+points(A.cqn[whLow], M.cqn[whLow], cex = 0.2, pch = 16, col = "blue")
+plot(A.cqn[whHigh], M.cqn[whHigh], cex = 0.2, pch = 16, xlab = "A", ylab = "M", 
+     main = "CQN normalized RPKM", ylim = c(-4,4), xlim = c(0,12), 
+     col = "red")
+points(A.cqn[whLow], M.cqn[whLow], cex = 0.2, pch = 16, col = "blue")
+@
+
+Note that genes/regions with very small counts should not be relied
+upon, even if the CQN normalized fold change are big.  They should be
+filtered out using some kind of statistical test, good packages for
+this are \Rpackage{DESeq}\cite{DESeq} and
+\Rpackage{edgeR}\cite{edgeR}.
+
+\section*{Import into edgeR}
+
+First we construct a \Robject{DGEList}.  In the \Rfunarg{groups}
+argument we use that the first 5 samples (columns) in
+\Robject{montgomery.subset} is what we earlier called \Robject{grp1}
+and the last 5 samples (columns) are \Robject{grp2}.
+
+<<edgeRconstructor>>=
+library(edgeR)
+d.mont <- DGEList(counts = montgomery.subset, lib.size = sizeFactors.subset, 
+                  group = rep(c("grp1", "grp2"), each = 5), genes = uCovar)
+@ 
+
+In this object we cannot (unfortunately, yet) also store the computed
+offsets.  Since we will use the offsets computed by \Rpackage{cqn},
+there is no need to normalize using the normalization tools from
+\Rpackage{edgeR}, such as \Rfunction{calcNormFactors}.  Also, as is
+clearly described in the \Rpackage{edgeR} user's guide, the
+\Rfunarg{lib.size} is unnecessary, since we plan to use the offsets
+computed from \Rpackage{cqn}.
+
+Using \Rpackage{edgeR} is well described in the user's guide, and we
+refer to that document for further information.  The analysis
+presented below should be thought of as an example, and not
+necessarily the best analysis of this data.
+
+The first step is estimating the dispersion parameter(s).  Several
+methods exists, such as \Rfunction{estimateGLMCommonDisp} or
+\Rfunction{estimateTagwiseDisp}.  We also need to setup a design
+matrix, which is particular simple for this two group comparison.
+Further information about constructing design matrices may be found in
+both the \Rpackage{edgeR} user's guide and the \Rpackage{limma} user's
+guide. 
+
+<<edgeRdisp,eval=FALSE>>=
+design <- model.matrix(~ d.mont$sample$group)
+d.mont.cqn <- estimateGLMCommonDisp(d.mont, design = design, offset = cqn.subset$offset)
+@ 
+
+After fitting the dispersion parameter(s), we need to fit the model,
+and do a test for significance of the parameter of interest.  With
+this design matrix, there are two coefficients.  The first coefficient
+is just an intercept (overall level of expression for the gene) and it
+is (usually) not meaningful to test for this effect.  Instead, the
+interesting coefficient is the second one that encodes a group difference.
+
+<<edgeRfit,eval=FALSE>>=
+efit.cqn <- glmFit(d.mont.cqn, design = design, offset = cqn.subset$offset)
+elrt.cqn <- glmLRT(d.mont.cqn, efit.cqn, coef = 2)
+topTags(elrt.cqn, n = 2)
+@ 
+
+\Rfunction{topTags} shows (per default) the "top 10" genes.  In this
+case, since we have biological replicates and just a random group
+structure, we would expect no differentially expression genes.
+Instead we get
+
+<<eval=FALSE>>=
+sum(topTags(elrt.cqn, n = Inf)$table$adj.P.Val <= 0.05)
+@ 
+
+significantly differentially expressed at an FDR (false discovery
+rate) of 5\%.  We may contrast this with the result of not using
+\Rpackage{cqn}: 
+
+<<edgeRstd,eval=FALSE>>=
+d.mont.std <- estimateGLMCommonDisp(d.mont, design = design)
+efit.std <- glmFit(d.mont.std, design = design)
+elrt.std <- glmLRT(d.mont.std, efit.std, coef = 2)
+sum(topTags(elrt.std, n = Inf)$table$adj.P.Val <= 0.05)
+@ 
+
+What is arguably also important is that we achieve a much better
+estimation of the fold change using \Rpackage{cqn}.
+
+\section*{SessionInfo}
+
+<<sessionInfo,results=tex,echo=FALSE>>=
+toLatex(sessionInfo())
+@ 
+
+\begin{thebibliography}{4}
+\bibitem{preprint} KD Hansen, RA Irizarry, and Z Wu, (2011) ``Removing
+    technical variability in RNA-seq data using conditional quantile
+    normalization''. \emph{Johns Hopkins, Dept of Biostatistics
+      Working Papers}, Working Paper 227. url:
+    \url{http://www.bepress.com/jhubiostat/paper227} 
+\bibitem{Montgomery} SB Montgomery, M Sammeth, M Gutierrez-Arcelus, RP Lach, 
+  C Ingle, J Nisbett, R Guigo, ET Dermitzakis, (2010) 
+  ``Transcriptome genetics using second generation sequencing in a Caucasian
+  population''. \emph{Nature} \textbf{464}(7289), 773--777.
+  doi: \href{http://dx.doi.org/10.1038/nature08903} {\path{10.1038/nature08903}}
+\bibitem{DESeq} S Anders and W Huber, (2010) ``Differential expression
+analysis for sequence count data''.  \emph{Genome Biology}
+\textbf{11}(10), R106.
+doi: \href{http://dx.doi.org/10.1186/gb-2010-11-10-r106}{\path{10.1186/gb-2010-11-10-r106}}
+\bibitem{edgeR} MD Robinson, DJ McCarthy, GK Smyth, (2010) ``edgeR: a
+Bioconductor package for differential expression analysis of digital
+gene expression data''.  \emph{Bioinformatics} \textbf{26}(1),
+139--140.
+doi: \href{http://dx.doi.org/10.1093/bioinformatics/btp616}{\path{10.1093/bioinformatics/btp616}}
+  \end{thebibliography}
+\end{document}
+
+% Local Variables:
+% fill-column: 100
+% LocalWords: LocalWords quantile sizeFactors datasets GC covariate
+% LocalWords: CQN cqn cqnplot RPKM overplotting cqn.fixedlength calcNormFactors
+% End:
+
