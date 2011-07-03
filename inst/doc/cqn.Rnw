@@ -231,7 +231,7 @@ Further information about constructing design matrices may be found in
 both the \Rpackage{edgeR} user's guide and the \Rpackage{limma} user's
 guide. 
 
-<<edgeRdisp,eval=FALSE>>=
+<<edgeRdisp>>=
 design <- model.matrix(~ d.mont$sample$group)
 d.mont.cqn <- estimateGLMCommonDisp(d.mont, design = design, offset = cqn.subset$offset)
 @ 
@@ -243,7 +243,7 @@ is just an intercept (overall level of expression for the gene) and it
 is (usually) not meaningful to test for this effect.  Instead, the
 interesting coefficient is the second one that encodes a group difference.
 
-<<edgeRfit,eval=FALSE>>=
+<<edgeRfit>>=
 efit.cqn <- glmFit(d.mont.cqn, design = design, offset = cqn.subset$offset)
 elrt.cqn <- glmLRT(d.mont.cqn, efit.cqn, coef = 2)
 topTags(elrt.cqn, n = 2)
@@ -254,22 +254,22 @@ case, since we have biological replicates and just a random group
 structure, we would expect no differentially expression genes.
 Instead we get
 
-<<eval=FALSE>>=
-sum(topTags(elrt.cqn, n = Inf)$table$adj.P.Val <= 0.05)
+<<>>=
+summary(decideTestsDGE(elrt.cqn))
 @ 
 
 significantly differentially expressed at an FDR (false discovery
 rate) of 5\%.  We may contrast this with the result of not using
 \Rpackage{cqn}: 
 
-<<edgeRstd,eval=FALSE>>=
+<<edgeRstd>>=
 d.mont.std <- estimateGLMCommonDisp(d.mont, design = design)
 efit.std <- glmFit(d.mont.std, design = design)
 elrt.std <- glmLRT(d.mont.std, efit.std, coef = 2)
-sum(topTags(elrt.std, n = Inf)$table$adj.P.Val <= 0.05)
+summary(decideTestsDGE(elrt.std))
 @ 
 
-What is arguably also important is that we achieve a much better
+What is arguably as important is that we achieve a much better
 estimation of the fold change using \Rpackage{cqn}.
 
 \section*{SessionInfo}
