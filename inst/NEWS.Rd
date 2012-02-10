@@ -4,6 +4,12 @@
 
 \section{Version 1.1}{
   \itemize{
+    \item Same fixes as in 1.0.1
+  }
+}
+
+\section{Version 1.0.1}{
+  \itemize{
     \item The function alpha has been moved from ggplot2 to the new
       package scales.  Vignette and Suggests: fields have been changed
       accordingly.
