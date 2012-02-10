@@ -12,6 +12,9 @@ cqn.fixedlength <- function(counts, x, lengths, sizeFactors = NULL, subindex = N
     if(is.null(subindex))
         subindex <- which(rowMeans(counts) > 50)
 
+    if(is.null(sizeFactors))
+        sizeFactors <- colSums(counts)
+    
     y <- sweep(sweep(log2(as.matrix(counts) + 1), 2, log2(sizeFactors/10^6)), 1, log2(lengths/1000))
     yfit <- y[subindex,, drop = FALSE]
 
@@ -90,6 +93,9 @@ cqn <- function(counts, x, lengths, sizeFactors = NULL, subindex = NULL,
     if(!is.null(subindex) && (min(subindex) <= 0 || max(subindex) > nrow(counts)))
         stop("argument 'subindex' (when used) needs to be indices into the number of rows of argument 'counts'")
     
+    if(is.null(sizeFactors))
+        sizeFactors <- colSums(counts)
+
     if(is.null(subindex))
         subindex <- which(rowMeans(counts) > 50)
     y <- sweep(log2(as.matrix(counts) + 1), 2, log2(sizeFactors/10^6))

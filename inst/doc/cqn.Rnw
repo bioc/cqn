@@ -1,6 +1,6 @@
 %\VignetteIndexEntry{CQN (Conditional Quantile Normalization)}
 %\VignetteDepends{cqn}
-%\VignetteDepends{ggplot2}
+%\VignetteDepends{scales}
 %\VignettePackage{cqn}
 \documentclass[12pt]{article}
 <<echo=FALSE>>=
@@ -40,7 +40,7 @@ method for normalizing RNA-seq datasets.  This method is described in
 
 <<load,results=hide>>=
 library(cqn)
-library(ggplot2)
+library(scales)
 @ 
 
 \section*{Data}
@@ -279,30 +279,29 @@ toLatex(sessionInfo())
 @ 
 
 \begin{thebibliography}{4}
-\bibitem{preprint} KD Hansen, RA Irizarry, and Z Wu, (2011) ``Removing
+\bibitem{preprint} Hansen, K.D., Irizarry, R.A., and Wu, W.  Removing
     technical variability in RNA-seq data using conditional quantile
-    normalization''. \emph{Johns Hopkins, Dept of Biostatistics
-      Working Papers}, Working Paper 227. url:
+    normalization. \emph{Johns Hopkins, Dept of Biostatistics
+      Working Papers}, Working Paper 227 (2011). url:
     \url{http://www.bepress.com/jhubiostat/paper227} 
-\bibitem{Montgomery} SB Montgomery, M Sammeth, M Gutierrez-Arcelus, RP Lach, 
-  C Ingle, J Nisbett, R Guigo, ET Dermitzakis, (2010) 
-  ``Transcriptome genetics using second generation sequencing in a Caucasian
-  population''. \emph{Nature} \textbf{464}(7289), 773--777.
-  doi: \href{http://dx.doi.org/10.1038/nature08903} {\path{10.1038/nature08903}}
-\bibitem{DESeq} S Anders and W Huber, (2010) ``Differential expression
-analysis for sequence count data''.  \emph{Genome Biology}
-\textbf{11}(10), R106.
-doi: \href{http://dx.doi.org/10.1186/gb-2010-11-10-r106}{\path{10.1186/gb-2010-11-10-r106}}
-\bibitem{edgeR} MD Robinson, DJ McCarthy, GK Smyth, (2010) ``edgeR: a
-Bioconductor package for differential expression analysis of digital
-gene expression data''.  \emph{Bioinformatics} \textbf{26}(1),
-139--140.
-doi: \href{http://dx.doi.org/10.1093/bioinformatics/btp616}{\path{10.1093/bioinformatics/btp616}}
+  \bibitem{Montgomery} Montgomery, S.B. \emph{et al.}  Transcriptome
+    genetics using second generation sequencing in a Caucasian
+    population. \emph{Nature} \textbf{464}, 773--777.  doi:
+    \href{http://dx.doi.org/10.1038/nature08903}
+    {\path{10.1038/nature08903}}
+  \bibitem{DESeq} Anders, S. and Huber, W. Differential expression
+    analysis for sequence count data.  \emph{Genome Biology}
+    \textbf{11}(10), R106 (2010).  doi:
+    \href{http://dx.doi.org/10.1186/gb-2010-11-10-r106}{\path{10.1186/gb-2010-11-10-r106}}
+  \bibitem{edgeR} Robinson, M.D., McCarthy, D.J., Smyth, G.K.  edgeR:
+    a Bioconductor package for differential expression analysis of
+    digital gene expression data.  \emph{Bioinformatics}
+    \textbf{26}(1), 139--140 (2010).  doi:
+    \href{http://dx.doi.org/10.1093/bioinformatics/btp616}{\path{10.1093/bioinformatics/btp616}}
   \end{thebibliography}
 \end{document}
 
 % Local Variables:
-% fill-column: 100
 % LocalWords: LocalWords quantile sizeFactors datasets GC covariate
 % LocalWords: CQN cqn cqnplot RPKM overplotting cqn.fixedlength calcNormFactors
 % End:
