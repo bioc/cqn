@@ -5,6 +5,8 @@
 \section{Version 1.1}{
   \itemize{
     \item Same fixes as in 1.0.1
+    \item Resaved the data files, so they take up less space.
+    \item Added edgeR as a Suggests: since the vignette uses it.
   }
 }
 

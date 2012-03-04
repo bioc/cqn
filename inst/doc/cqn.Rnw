@@ -1,6 +1,7 @@
 %\VignetteIndexEntry{CQN (Conditional Quantile Normalization)}
 %\VignetteDepends{cqn}
 %\VignetteDepends{scales}
+%\VignetteDepends{edgeR}
 %\VignettePackage{cqn}
 \documentclass[12pt]{article}
 <<echo=FALSE>>=
