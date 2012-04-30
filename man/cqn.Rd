@@ -1,6 +1,7 @@
 \name{cqn}
 \alias{cqn}
 \alias{cqn.fixedlength}
+\alias{print.cqn}
 
 \title{
 CQN (conditional quantile normalization) for RNA-Seq data
@@ -9,13 +10,14 @@ CQN (conditional quantile normalization) for RNA-Seq data
 This function implements CQN (conditional quantile normalization) for RNA-Seq data.
 }
 \usage{
-cqn(counts, x, lengths, sizeFactors = NULL, subindex = NULL, tau = 0.5, sqn = TRUE, verbose = FALSE)
-cqn.fixedlength(counts, x, lengths, sizeFactors = NULL, subindex = NULL, tau = 0.5, sqn = TRUE, verbose = FALSE)
+cqn(counts, x, lengths, sizeFactors = NULL, subindex = NULL, tau = 0.5, sqn = TRUE,
+    lengthMethod = c("smooth", "fixed"), verbose = FALSE)
+\method{print}{cqn}(x, \dots)
 }
 \arguments{
   \item{counts}{
     An object that can be coerced to a \code{matrix} of region by sample
-    counts.  Ought to have integer values.
+    counts.  Ought to have integer values.  
 }
   \item{x}{
     This is a covariate whose systematic influence on the counts will be
@@ -44,10 +46,14 @@ cqn.fixedlength(counts, x, lengths, sizeFactors = NULL, subindex = NULL, tau = 0
     This argument indicates whether the residuals from the systematic
     fit are (subset) quantile normalized.  The default should only be
     changed by expert users.
-}
+  }
+  \item{lengthMethod}{
+    Should length enter the model as a smooth function or not.
+  }
   \item{verbose}{
     Is the function verbose?
-}
+  }
+  \item{\dots}{Not used.}
 }
 
 \details{
@@ -55,9 +61,12 @@ cqn.fixedlength(counts, x, lengths, sizeFactors = NULL, subindex = NULL, tau = 0
   for RNA-Seq data.  The functions remove a single systematic effect,
   contained in the argument \code{x}, which will typicall be GC
   content.  The effect of \code{lengths} will either be modelled as a
-  smooth function (which we recommend), if you are using \code{cqn} or
+  smooth function (which we recommend), if you are using
+  \code{lengthMethod = "smooth"} or
   as an offset (equivalent to modelling using RPKMs), if you are using
-  \code{cqn.fixedlength}.
+  \code{lengthMethod = "fixed"}.  Length can be complete removed from
+  the model by having \code{lengthMethod = "fixed"} and setting all
+  lengths to 1000.
 
   Final corrected values are equal to \code{value$y + value$offset}.
 }
@@ -83,13 +92,13 @@ cqn.fixedlength(counts, x, lengths, sizeFactors = NULL, subindex = NULL, tau = 0
     function values on a grid.  Columns are samples and rows are grid points.}
   \item{grid2}{The grid points on which function 2 (lengths) was evaluated.}
   \item{knots2}{The knots used for function 2 (lengths).}
+  \item{call}{The call.}
 }
 
-\references{ Hansen, K.D., Irizarry, R.A. and Wu Z., Removing technical
-  variability in RNA-seq data using conditional quantile normalization,
-  Johns Hopkins, Dept of Biostatistics Working Papers. Working Paper
-  227, \url{http://www.bepress.com/jhubiostat/paper227} }
-
+\references{   KD Hansen, RA Irizarry, and Z Wu, Removing technical
+  variability in RNA-seq data using conditional quantile
+  normalization. Biostatistics 2012 vol. 13(2) pp. 204-216.
+}
 \author{ Kasper Daniel Hansen, Zhijin Wu}
 \note{
   Internally, the function uses a custom implementation of subset

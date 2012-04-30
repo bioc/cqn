@@ -2,6 +2,20 @@
 \title{CQN News}
 \encoding{UTF-8}
 
+\section{Version 1.3}{
+  \itemize{
+    \item Updated the citations in the vignette and the CITATION file.
+    \item cqn.fixedlength has been removed, using cqn(lengthMethod =
+    "fixed") instead.
+    \item A call slot has been added to cqn objects.
+    \item cqn() now accepts count matrices with 1 column or vectors (although it makes
+    little sense to use the function on such data).
+    \item Added Questions and Answers to the vignette and moved vignette
+    to vignettes dir.
+  }
+}
+
+
 \section{Version 1.1}{
   \itemize{
     \item Same fixes as in 1.0.1

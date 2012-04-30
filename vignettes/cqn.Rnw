@@ -7,7 +7,7 @@
 <<echo=FALSE>>=
 options(width=70)
 @ 
-\SweaveOpts{eps=FALSE,echo=TRUE,png=TRUE,pdf=FALSE,figs.only=TRUE}
+\SweaveOpts{eps=FALSE,echo=TRUE,png=TRUE,pdf=FALSE,figs.only=TRUE,keep.source=TRUE}
 \usepackage{fullpage}
 \usepackage{times}
 \usepackage[colorlinks=TRUE,urlcolor=blue,citecolor=blue]{hyperref}
@@ -26,7 +26,7 @@ options(width=70)
 \author{Kasper Daniel Hansen \\ \texttt{khansen@jhsph.edu}
 \and
 Zhijin Wu \\ \texttt{zhijin\_wu@brown.edu}}
-\date{Modified: June 4, 2011.  Compiled: \today}
+\date{Modified: April 29, 2012.  Compiled: \today}
 \begin{document}
 \setlength{\parskip}{0.2\baselineskip}
 \setlength{\parindent}{0pt}
@@ -37,7 +37,7 @@ Zhijin Wu \\ \texttt{zhijin\_wu@brown.edu}}
 
 This package contains the CQN (conditional quantile normalization)
 method for normalizing RNA-seq datasets.  This method is described in
-\cite{preprint}.
+\cite{cqnpaper}.
 
 <<load,results=hide>>=
 library(cqn)
@@ -47,7 +47,7 @@ library(scales)
 \section*{Data}
 
 As an example we use ten samples from Montgomery \cite{Montgomery}.
-The data has been processed as described in \cite{preprint}.  First we
+The data has been processed as described in \cite{cqnpaper}.  First we
 have the region by sample count matrix
 
 <<data1>>=
@@ -86,19 +86,21 @@ stopifnot(colnames(montgomery.subset) == names(sizeFactors.subset))
 
 \section*{Normalization}
 
-The methodology is described in \cite{preprint}.  The main workhorse is
+The methodology is described in \cite{cqnpaper}.  The main workhorse is
 the function \Rfunction{cqn} which fits the following model
 \begin{displaymath}
   \log_2(\textrm{RPM}) = s(x) + s(\log_2(\textrm{length}))
 \end{displaymath}
 where $x$ is some covariate, $s$ are smooth functions (specifically
 natural cubic splines with 5 knots), and $\textrm{RPM}$ are ``reads
-per millions''.  We also have the function \Rfunction{cqn.fixedlength}
-which fits the model
+per millions''.  It is also possible to just fit a model like
 \begin{displaymath}
 \log_2(\textrm{RPKM}) = s(x)
 \end{displaymath}
-In this model gene length is included as a known offset.
+In this model gene length is included as a known offset.  This is done
+by using the \Rfunarg{cqn(lengthMethod = "fixed")}.  If this is done, and
+\Rfunarg{lengths} is equal to 1000, it is equivalent to not using gene
+length at all.
 
 The basic call to \Rfunction{cqn} is relatively easy, we need the count
 matrix, a vector of lengths, a vector of GC content and a vector of
@@ -112,8 +114,8 @@ cqn.subset
 @ 
 
 This normalized matrix is similar, but not equivalent, to the data
-examined in \cite{preprint}.  The main differences are (1) in
-\cite{preprint} we normalize 60 samples together, not 10 and (2) we
+examined in \cite{cqnpaper}.  The main differences are (1) in
+\cite{cqnpaper} we normalize 60 samples together, not 10 and (2) we
 have removed all genes with zero counts in all 10 samples.
 
 We can examine plots of systematic effects by using \Rfunction{cqnplot}.
@@ -143,7 +145,7 @@ RPKM.std <- sweep(RPM, 1, log2(uCovar$length / 10^3))
 @ 
 
 We now look at differential expression between two groups of samples.
-We use the same grouping as in \cite{preprint}, namely
+We use the same grouping as in \cite{cqnpaper}, namely
 <<groups>>=
 grp1 <- c("NA06985", "NA06994", "NA07037", "NA10847", "NA11920")
 grp2 <- c("NA11918", "NA11931", "NA12003", "NA12006", "NA12287")
@@ -182,13 +184,13 @@ par(mfrow = c(1,2))
 gccontent <- uCovar$gccontent[whGenes]
 whHigh <- which(gccontent > quantile(gccontent, 0.9))
 whLow <- which(gccontent < quantile(gccontent, 0.1))
-plot(A.std[whHigh], M.std[whHigh], cex = 0.2, pch = 16, xlab = "A", ylab = "M", 
-     main = "Standard RPKM", ylim = c(-4,4), xlim = c(0,12), 
-     col = "red")
+plot(A.std[whHigh], M.std[whHigh], cex = 0.2, pch = 16, xlab = "A", 
+     ylab = "M", main = "Standard RPKM", 
+     ylim = c(-4,4), xlim = c(0,12), col = "red")
 points(A.cqn[whLow], M.cqn[whLow], cex = 0.2, pch = 16, col = "blue")
-plot(A.cqn[whHigh], M.cqn[whHigh], cex = 0.2, pch = 16, xlab = "A", ylab = "M", 
-     main = "CQN normalized RPKM", ylim = c(-4,4), xlim = c(0,12), 
-     col = "red")
+plot(A.cqn[whHigh], M.cqn[whHigh], cex = 0.2, pch = 16, xlab = "A", 
+     ylab = "M", main = "CQN normalized RPKM", 
+     ylim = c(-4,4), xlim = c(0,12), col = "red")
 points(A.cqn[whLow], M.cqn[whLow], cex = 0.2, pch = 16, col = "blue")
 @
 
@@ -234,7 +236,8 @@ guide.
 
 <<edgeRdisp>>=
 design <- model.matrix(~ d.mont$sample$group)
-d.mont.cqn <- estimateGLMCommonDisp(d.mont, design = design, offset = cqn.subset$offset)
+d.mont.cqn <- estimateGLMCommonDisp(d.mont, design = design, 
+                                    offset = cqn.subset$offset)
 @ 
 
 After fitting the dispersion parameter(s), we need to fit the model,
@@ -273,32 +276,69 @@ summary(decideTestsDGE(elrt.std))
 What is arguably as important is that we achieve a much better
 estimation of the fold change using \Rpackage{cqn}.
 
+\section*{Question and Answers}
+
+\subsubsection*{Can I run cqn() on only 1 sample?}
+
+CQN is meant to normalize several samples together.  It is not clear
+that it makes sense at all to use this normalization technique on a
+single sample.  But it is possible. 
+
+\subsubsection*{Can I use this for small RNA-seq (microRNAs)?}
+
+We do not have personal experience with using CQN to normalize small
+RNA sequencing data.  However, we believe it might be beneficial.  As
+always, it is \emph{highly} recommended to evaluate whether it is
+necessary and beneficial.
+
+One special aspect of small RNAs is that they all have very similar
+length.  Fitting a model with a smooth effect of gene length might
+very well lead to mathematical instability (you get an error).  This 
+can be avoided by using the argument \Rfunarg{lengthMethod = "fixed"}
+which just divides the gene counts by the gene length instead of using
+a smooth function.  Additionally, it may be coupled with setting
+\Rfunarg{lengths = 1} which completely removes gene length from the model.
+
+\subsubsection*{Could it be true that genes with higher GC content are
+  higher expressed?}
+
+It has been suggested that genes that are either extremely high or
+extremely low expressed are under some form of selection leading to
+``extreme'' GC content.  What CQN does, is making the effect of GC
+content comparable across samples, and we show in \cite{cqnpaper} that
+this leads to improved inference.  It also flattens the effect of
+GC content on gene expression, but we believe this is better than
+having the effect of GC content depend on the sample.
+
+
 \section*{SessionInfo}
 
-<<sessionInfo,results=tex,echo=FALSE>>=
+<<sessionInfo,results=tex,eval=TRUE,echo=FALSE>>=
 toLatex(sessionInfo())
 @ 
 
 \begin{thebibliography}{4}
-\bibitem{preprint} Hansen, K.D., Irizarry, R.A., and Wu, W.  Removing
+  \bibitem{cqnpaper} Hansen, K.D., Irizarry, R.A., and Wu, W.  Removing
     technical variability in RNA-seq data using conditional quantile
-    normalization. \emph{Johns Hopkins, Dept of Biostatistics
-      Working Papers}, Working Paper 227 (2011). url:
-    \url{http://www.bepress.com/jhubiostat/paper227} 
+    normalization. \emph{Biostatistics} 2012, \textbf{13}(2), 204--216 .  
+    \href{http://dx.doi.org/10.1093/biostatistics/kxr054}
+    {DOI: \path{10.1093/biostatistics/kxr054}}
   \bibitem{Montgomery} Montgomery, S.B. \emph{et al.}  Transcriptome
     genetics using second generation sequencing in a Caucasian
-    population. \emph{Nature} \textbf{464}, 773--777.  doi:
+    population. \emph{Nature} 2010, \textbf{464}, 773--777 .
     \href{http://dx.doi.org/10.1038/nature08903}
-    {\path{10.1038/nature08903}}
+    {DOI: \path{10.1038/nature08903}}
   \bibitem{DESeq} Anders, S. and Huber, W. Differential expression
-    analysis for sequence count data.  \emph{Genome Biology}
-    \textbf{11}(10), R106 (2010).  doi:
-    \href{http://dx.doi.org/10.1186/gb-2010-11-10-r106}{\path{10.1186/gb-2010-11-10-r106}}
+    analysis for sequence count data.  \emph{Genome Biology} 2010,
+    \textbf{11}(10), R106.
+    \href{http://dx.doi.org/10.1186/gb-2010-11-10-r106}
+    {DOI: \path{10.1186/gb-2010-11-10-r106}}
   \bibitem{edgeR} Robinson, M.D., McCarthy, D.J., Smyth, G.K.  edgeR:
     a Bioconductor package for differential expression analysis of
-    digital gene expression data.  \emph{Bioinformatics}
-    \textbf{26}(1), 139--140 (2010).  doi:
-    \href{http://dx.doi.org/10.1093/bioinformatics/btp616}{\path{10.1093/bioinformatics/btp616}}
+    digital gene expression data.  \emph{Bioinformatics} 2010,
+    \textbf{26}(1), 139--140.
+    \href{http://dx.doi.org/10.1093/bioinformatics/btp616}
+    {DOI: \path{10.1093/bioinformatics/btp616}}
   \end{thebibliography}
 \end{document}
 

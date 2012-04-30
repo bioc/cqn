@@ -34,39 +34,41 @@
 ## LTrule=1: leave it unnormalized.
 ## 
 
-SQN2 <-function(y,N.mix=5,ctrl.id,model.weight=.9,max.q=.95,min.q=.01,LTrule=1){
-  QE=apply(y[ctrl.id,],2,sort)
-  QN=apply(QE,1,median)
-  mix.param=suppressWarnings(Mclust(QN,G=N.mix)$parameters)
-  mix.param=norMix(mu=mix.param$mean,sig2=mix.param$variance$sigmasq,w=mix.param$pro)
+SQN2 <-function(y, N.mix = 5, ctrl.id, model.weight = .9, max.q = .95,
+                min.q = .01, LTrule = 1){
+  QE <- apply(y[ctrl.id,,drop=FALSE], 2, sort)
+  QN <- apply(QE, 1, median)
+  mix.param <- suppressWarnings(Mclust(QN, G = N.mix)$parameters)
+  mix.param <- norMix(mu = mix.param$mean, sig2 = mix.param$variance$sigmasq, w = mix.param$pro)
 
-  qq=seq(1/(2*length(QN)),1-1/(2*length(QN)),1/length(QN))
-  qq=qnorMix(qq,mix.param)
-  QN1=QN*(1-model.weight)+qq*model.weight
+  qq <- seq(1/(2*length(QN)), 1-1/(2*length(QN)), 1/length(QN))
+  qq <- qnorMix(qq,mix.param)
+  QN1 <- QN*(1-model.weight) + qq*model.weight
   
-  ynorm=apply(y,2,mix.qn,ctrl.id,NQ=QN1,mix.param=mix.param,max.q=max.q,min.q=min.q,
-        LTrule)
-  model.par=c("N.mix"=N.mix,"model.weight"=model.weight,"max.q"=max.q,"min.q"=min.q,"LTrule"=LTrule)
+  ynorm <- apply(y, 2, mix.qn, ctrl.id = ctrl.id, NQ = QN1, mix.param = mix.param,
+                 max.q = max.q, min.q = min.q, LTrule = LTrule)
+  model.par <- c("N.mix" = N.mix, "model.weight" = model.weight,
+                 "max.q" = max.q, "min.q" = min.q, "LTrule" = LTrule)
   
-  list("yout"=ynorm,"QN"=QN1,par=list("mix.param"=mix.param,"model.par"=model.par))
+  list("yout" = ynorm, "QN" = QN1, par = list("mix.param" = mix.param, "model.par" = model.par))
   
 }  
 
-mix.qn=function(y0,ctrl.id,NQ,mix.param,max.q=0.95,min.q=.01,LTrule=1){ 
+mix.qn=function(y0, ctrl.id, NQ, mix.param, max.q = 0.95, min.q = .01, LTrule = 1){ 
   ##
   ##NQ:normalized quantiles
   ##
-  ECDF=ecdf(y0[ctrl.id])
-  Q=ECDF(y0) ## if outside the range, 0 or 1
-  id0=which(Q<min.q)
+  ECDF <- ecdf(y0[ctrl.id])
+  Q <- ECDF(y0) ## if outside the range, 0 or 1
+  id0 <- which(Q<min.q)
 
-  id2=which(Q>max.q)
-  B=length(id2)
-  Q2=max.q+(1-max.q)*(1:B)/(B+1)    
-  y2o=order(y0[id2])
-  Q[id2][y2o]=Q2
+  id2 <- which(Q>max.q)
+  B <- length(id2)
+  Q2 <- max.q+(1-max.q)*(1:B)/(B+1)    
+  y2o <- order(y0[id2])
+  Q[id2][y2o] <- Q2
   
-  ynorm=vector(mode="numeric",length=length(y0))
+  ynorm <- vector(mode="numeric", length = length(y0))
   #if (LTrule==1) ## keep original
   #  ynorm[id0]= y0[id0]
   #if (LTrule==2) ## use model to predict
@@ -74,9 +76,9 @@ mix.qn=function(y0,ctrl.id,NQ,mix.param,max.q=0.95,min.q=.01,LTrule=1){
   #if (LTrule==3) ## trucate
   #  ynorm[id0]= quantile(QN1,min.q)
 
-  ynorm[id0]= y0[id0]-quantile(y0[ctrl.id],min.q)+quantile(NQ,min.q)
-  ynorm[-c(id0,id2)]=quantile(NQ,Q[-c(id0,id2)])
-  ynorm[id2]= qnorMix(Q[id2],mix.param)
+  ynorm[id0] <- y0[id0]-quantile(y0[ctrl.id], min.q) + quantile(NQ, min.q)
+  ynorm[-c(id0,id2)] <- quantile(NQ, Q[-c(id0,id2)])
+  ynorm[id2] <- qnorMix(Q[id2], mix.param)
   ynorm
 }
 
