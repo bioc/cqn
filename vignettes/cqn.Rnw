@@ -249,7 +249,7 @@ interesting coefficient is the second one that encodes a group difference.
 
 <<edgeRfit>>=
 efit.cqn <- glmFit(d.mont.cqn, design = design, offset = cqn.subset$offset)
-elrt.cqn <- glmLRT(d.mont.cqn, efit.cqn, coef = 2)
+elrt.cqn <- glmLRT(efit.cqn, coef = 2)
 topTags(elrt.cqn, n = 2)
 @ 
 
