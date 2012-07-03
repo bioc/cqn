@@ -4,6 +4,8 @@
 
 \section{Version 1.3}{
   \itemize{
+    \item Small fix to the vignette in the edgeR example, caused by
+    changes to edgeR.
     \item Updated the citations in the vignette and the CITATION file.
     \item cqn.fixedlength has been removed, using cqn(lengthMethod =
     "fixed") instead.

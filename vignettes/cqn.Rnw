@@ -269,7 +269,7 @@ rate) of 5\%.  We may contrast this with the result of not using
 <<edgeRstd>>=
 d.mont.std <- estimateGLMCommonDisp(d.mont, design = design)
 efit.std <- glmFit(d.mont.std, design = design)
-elrt.std <- glmLRT(d.mont.std, efit.std, coef = 2)
+elrt.std <- glmLRT(efit.std, coef = 2)
 summary(decideTestsDGE(elrt.std))
 @ 
 
