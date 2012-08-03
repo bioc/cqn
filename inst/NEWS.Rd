@@ -4,6 +4,10 @@
 
 \section{Version 1.3}{
   \itemize{
+    \item Bugfix to the vignette; the two-panel (color) plot on page 6
+    used CQN corrected data as blue points in both panels.  Now the left
+    plot shows standard RPKM in blue.  Thanks to Maria Keays
+    \email{mkeays@ebi.ac.uk}. 
     \item Small fix to the vignette in the edgeR example, caused by
     changes to edgeR.
     \item Updated the citations in the vignette and the CITATION file.

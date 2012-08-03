@@ -26,7 +26,7 @@ options(width=70)
 \author{Kasper Daniel Hansen \\ \texttt{khansen@jhsph.edu}
 \and
 Zhijin Wu \\ \texttt{zhijin\_wu@brown.edu}}
-\date{Modified: April 29, 2012.  Compiled: \today}
+\date{Modified: August 8, 2012.  Compiled: \today}
 \begin{document}
 \setlength{\parskip}{0.2\baselineskip}
 \setlength{\parindent}{0pt}
@@ -187,7 +187,7 @@ whLow <- which(gccontent < quantile(gccontent, 0.1))
 plot(A.std[whHigh], M.std[whHigh], cex = 0.2, pch = 16, xlab = "A", 
      ylab = "M", main = "Standard RPKM", 
      ylim = c(-4,4), xlim = c(0,12), col = "red")
-points(A.cqn[whLow], M.cqn[whLow], cex = 0.2, pch = 16, col = "blue")
+points(A.std[whLow], M.std[whLow], cex = 0.2, pch = 16, col = "blue")
 plot(A.cqn[whHigh], M.cqn[whHigh], cex = 0.2, pch = 16, xlab = "A", 
      ylab = "M", main = "CQN normalized RPKM", 
      ylim = c(-4,4), xlim = c(0,12), col = "red")
