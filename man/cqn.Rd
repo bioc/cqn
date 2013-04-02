@@ -84,6 +84,8 @@ cqn(counts, x, lengths, sizeFactors = NULL, subindex = NULL, tau = 0.5, sqn = TR
   to log2 tranformed reads per millions.}
   \item{offset}{The estimated offset.}
   \item{offset0}{A single number used internally for identifiability.}
+  \item{glm.offset}{An offset useful for supplying to a GLM type model
+  function.  It is on the natural log scale and includes correcting for sizeFactors.}
   \item{func1}{The estimated effect of function 1 (argument \code{x}).  This is a matrix of
     function values on a grid.  Columns are samples and rows are grid points.}
   \item{grid1}{The grid points on which function 1 (argument \code{x}) was evaluated.}

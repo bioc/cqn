@@ -2,6 +2,19 @@
 \title{CQN News}
 \encoding{UTF-8}
 
+\section{Version 1.5}{
+  \itemize{
+    \item THe output object from cqn() now has an additional component:
+    glm.offset which is an offset matrix which can directly be used in a
+    GLM type model (specifically edgeR).  The usage is explained in the
+    vignette secion on Import into edgeR.  Previously the vignette
+    recommended using the offset component of the cqn output, which is
+    wrong, due to a scaling issue.  The offset component of cqn is
+    unchanged.  This bug was found by Mike Love
+    \email{love@molgen.mpg.de} and fixed in CQN 1.5.1.
+  }
+}
+
 \section{Version 1.3}{
   \itemize{
     \item Bugfix to the vignette; the two-panel (color) plot on page 6

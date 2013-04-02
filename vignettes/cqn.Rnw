@@ -198,7 +198,7 @@ Note that genes/regions with very small counts should not be relied
 upon, even if the CQN normalized fold change are big.  They should be
 filtered out using some kind of statistical test, good packages for
 this are \Rpackage{DESeq}\cite{DESeq} and
-\Rpackage{edgeR}\cite{edgeR}.
+\Rpackage{edgeR}\cite{edgeR, edgeRglm}.
 
 \section*{Import into edgeR}
 
@@ -213,31 +213,34 @@ d.mont <- DGEList(counts = montgomery.subset, lib.size = sizeFactors.subset,
                   group = rep(c("grp1", "grp2"), each = 5), genes = uCovar)
 @ 
 
-In this object we cannot (unfortunately, yet) also store the computed
-offsets.  Since we will use the offsets computed by \Rpackage{cqn},
-there is no need to normalize using the normalization tools from
-\Rpackage{edgeR}, such as \Rfunction{calcNormFactors}.  Also, as is
-clearly described in the \Rpackage{edgeR} user's guide, the
-\Rfunarg{lib.size} is unnecessary, since we plan to use the offsets
-computed from \Rpackage{cqn}.
+In this object we cannot (unfortunately, yet) also store the computed offsets.  Since we will use
+the offsets computed by \Rpackage{cqn}, there is no need to normalize using the normalization tools
+from \Rpackage{edgeR}, such as \Rfunction{calcNormFactors}.  Also, as is clearly described in the
+\Rpackage{edgeR} user's guide, the \Rfunarg{lib.size} is unnecessary, since we plan to use the
+offsets computed from \Rpackage{cqn}.
 
-Using \Rpackage{edgeR} is well described in the user's guide, and we
-refer to that document for further information.  The analysis
-presented below should be thought of as an example, and not
+However, we need to use the component \Rfunction{glm.offset} which is on the natural logarithmic
+scale and also includes correcting for \Rfunction{sizeFactors}.  It is possible to include the
+offset directly into the DGEList, by post-processing the output like
+<<eval=FALSE>>=
+## Not run
+d.mont$offset <- cqn.subset$glm.offset
+@ 
+
+Using \Rpackage{edgeR} is well described in the user's guide, and we refer to that document for
+further information.  The analysis presented below should be thought of as an example, and not
 necessarily the best analysis of this data.
 
-The first step is estimating the dispersion parameter(s).  Several
-methods exists, such as \Rfunction{estimateGLMCommonDisp} or
-\Rfunction{estimateTagwiseDisp}.  We also need to setup a design
-matrix, which is particular simple for this two group comparison.
-Further information about constructing design matrices may be found in
-both the \Rpackage{edgeR} user's guide and the \Rpackage{limma} user's
-guide. 
+The first step is estimating the dispersion parameter(s).  Several methods exists, such as
+\Rfunction{estimateGLMCommonDisp} or \Rfunction{estimateTagwiseDisp}.  We also need to setup a
+design matrix, which is particular simple for this two group comparison.  Further information about
+constructing design matrices may be found in both the \Rpackage{edgeR} user's guide and the
+\Rpackage{limma} user's guide.
 
 <<edgeRdisp>>=
 design <- model.matrix(~ d.mont$sample$group)
 d.mont.cqn <- estimateGLMCommonDisp(d.mont, design = design, 
-                                    offset = cqn.subset$offset)
+                                    offset = cqn.subset$glm.offset)
 @ 
 
 After fitting the dispersion parameter(s), we need to fit the model,
@@ -248,7 +251,8 @@ is (usually) not meaningful to test for this effect.  Instead, the
 interesting coefficient is the second one that encodes a group difference.
 
 <<edgeRfit>>=
-efit.cqn <- glmFit(d.mont.cqn, design = design, offset = cqn.subset$offset)
+efit.cqn <- glmFit(d.mont.cqn, design = design, 
+                   offset = cqn.subset$glm.offset)
 elrt.cqn <- glmLRT(efit.cqn, coef = 2)
 topTags(elrt.cqn, n = 2)
 @ 
@@ -272,6 +276,8 @@ efit.std <- glmFit(d.mont.std, design = design)
 elrt.std <- glmLRT(efit.std, coef = 2)
 summary(decideTestsDGE(elrt.std))
 @ 
+
+In this evaluation, it is not clear that using CQN is better.
 
 What is arguably as important is that we achieve a much better
 estimation of the fold change using \Rpackage{cqn}.
@@ -302,14 +308,29 @@ a smooth function.  Additionally, it may be coupled with setting
 \subsubsection*{Could it be true that genes with higher GC content are
   higher expressed?}
 
-It has been suggested that genes that are either extremely high or
-extremely low expressed are under some form of selection leading to
-``extreme'' GC content.  What CQN does, is making the effect of GC
-content comparable across samples, and we show in \cite{cqnpaper} that
-this leads to improved inference.  It also flattens the effect of
-GC content on gene expression, but we believe this is better than
-having the effect of GC content depend on the sample.
+It has been suggested that genes that are either extremely high or extremely low expressed are under
+some form of selection leading to ``extreme'' GC content.  What CQN does, is making the effect of GC
+content comparable across samples, and we show in \cite{cqnpaper} that this leads to improved
+inference.  It also flattens the effect of GC content on gene expression, but we believe this is
+better than having the effect of GC content depend on the sample.
 
+\subsubsection*{Does cqn remove batch effects?}
+
+No, unless a batch effect only (or mainly) affects your measurements through GC content.  We believe
+that the sample-specific effect of GC content on gene expression is a kind of batch effect, but
+is unlikely to be the only one.  CQN does normalize your RNA-seq data in the same way that say
+quantile normalization normalizes microarray data, but such normalization does not remove batch
+effects.  
+
+\subsubsection*{I don't understand the difference between offset and glm.offset?}
+
+This comes from a historical error.  In our paper, we use the quantity
+<<eval=FALSE>>=
+cqn$y + cqn$offset
+@ 
+as the CQN-corrected estimated expression measures.  However, the offset quantity is on the wrong
+scale for inclusion into a GLM-type model (like edgeR or DEseq2).  For this purpose, use
+glm.offset.  We have kept the original naming in order to achieve backwards compatibility.
 
 \section*{SessionInfo}
 
@@ -317,28 +338,32 @@ having the effect of GC content depend on the sample.
 toLatex(sessionInfo())
 @ 
 
-\begin{thebibliography}{4}
-  \bibitem{cqnpaper} Hansen, K.D., Irizarry, R.A., and Wu, W.  Removing
+\begin{thebibliography}{5}
+  \bibitem{cqnpaper} KD Hansen, RA Irizarry, and Z Wu.  Removing
     technical variability in RNA-seq data using conditional quantile
-    normalization. \emph{Biostatistics} 2012, \textbf{13}(2), 204--216 .  
-    \href{http://dx.doi.org/10.1093/biostatistics/kxr054}
-    {DOI: \path{10.1093/biostatistics/kxr054}}
-  \bibitem{Montgomery} Montgomery, S.B. \emph{et al.}  Transcriptome
+    normalization. \emph{Biostatistics} 2012, \textbf{13}(2), 204--216.  
+    DOI: \href{http://dx.doi.org/10.1093/biostatistics/kxr054}
+    {\path{10.1093/biostatistics/kxr054}}.
+  \bibitem{Montgomery} SB Montgomery \emph{et al.}  Transcriptome
     genetics using second generation sequencing in a Caucasian
-    population. \emph{Nature} 2010, \textbf{464}, 773--777 .
-    \href{http://dx.doi.org/10.1038/nature08903}
-    {DOI: \path{10.1038/nature08903}}
-  \bibitem{DESeq} Anders, S. and Huber, W. Differential expression
+    population. \emph{Nature} 2010, \textbf{464}, 773--777. DOI:
+    \href{http://dx.doi.org/10.1038/nature08903}.
+    {\path{10.1038/nature08903}}
+  \bibitem{DESeq} S Anders and W Huber. Differential expression
     analysis for sequence count data.  \emph{Genome Biology} 2010,
-    \textbf{11}(10), R106.
+    \textbf{11}(10), R106. DOI:
     \href{http://dx.doi.org/10.1186/gb-2010-11-10-r106}
-    {DOI: \path{10.1186/gb-2010-11-10-r106}}
-  \bibitem{edgeR} Robinson, M.D., McCarthy, D.J., Smyth, G.K.  edgeR:
+    {\path{10.1186/gb-2010-11-10-r106}}.
+  \bibitem{edgeR} MD Robinson, DJ McCarthy, GK Smyth.  edgeR:
     a Bioconductor package for differential expression analysis of
     digital gene expression data.  \emph{Bioinformatics} 2010,
-    \textbf{26}(1), 139--140.
+    \textbf{26}(1), 139--140. DOI:
     \href{http://dx.doi.org/10.1093/bioinformatics/btp616}
-    {DOI: \path{10.1093/bioinformatics/btp616}}
+    {\path{10.1093/bioinformatics/btp616}}.
+  \bibitem{edgeRglm} DJ McCarthy, Y Chen, GK Smyth.  Differential expression analysis of multifactor
+    RNA-Seq experiments with respect to biological variation. \emph{Nucleic Acids Research} 2012,
+    \textbf{40}, 4288- 4297. DOI:
+    \href{http://dx.doi.org/10.1093/nar/gks042}{\path{10.1093/nar/gks042}}.
   \end{thebibliography}
 \end{document}
 

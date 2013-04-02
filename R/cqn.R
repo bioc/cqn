@@ -105,9 +105,13 @@ cqn <- function(counts, x, lengths, sizeFactors = NULL, subindex = NULL,
         func2 <- NULL
         colnames(func1) <- colnames(y)
     }
-    
-    out <- list(counts = counts, lengths = lengths, sizeFactors = sizeFactors, subindex = subindex, 
-                y = y, x = x, offset = offset, offset0 = offset0, 
+
+    glm.offset <- sweep(-offset, 2, -log2(sizeFactors / 10^6))
+    glm.offset <- log(2)*glm.offset
+    out <- list(counts = counts, lengths = lengths, sizeFactors = sizeFactors,
+                subindex = subindex, 
+                y = y, x = x, offset = offset, offset0 = offset0,
+                glm.offset = glm.offset,
                 func1 = func1, func2 = func2,
                 grid1 = x1p$grid, grid2 = x2p$grid,
                 knots1 = x1p$knots, knots2 = x2p$knots, call = cl)
