@@ -239,8 +239,8 @@ constructing design matrices may be found in both the \Rpackage{edgeR} user's gu
 
 <<edgeRdisp>>=
 design <- model.matrix(~ d.mont$sample$group)
-d.mont.cqn <- estimateGLMCommonDisp(d.mont, design = design, 
-                                    offset = cqn.subset$glm.offset)
+d.mont$offset <- cqn.subset$glm.offset
+d.mont.cqn <- estimateGLMCommonDisp(d.mont, design = design) 
 @ 
 
 After fitting the dispersion parameter(s), we need to fit the model,
@@ -251,8 +251,7 @@ is (usually) not meaningful to test for this effect.  Instead, the
 interesting coefficient is the second one that encodes a group difference.
 
 <<edgeRfit>>=
-efit.cqn <- glmFit(d.mont.cqn, design = design, 
-                   offset = cqn.subset$glm.offset)
+efit.cqn <- glmFit(d.mont.cqn, design = design)
 elrt.cqn <- glmLRT(efit.cqn, coef = 2)
 topTags(elrt.cqn, n = 2)
 @ 
