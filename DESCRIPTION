@@ -1,5 +1,5 @@
 Package: cqn
-Version: 1.24.0
+Version: 1.25.0
 Title: Conditional quantile normalization
 Description: A normalization tool for RNA-Seq data, implementing the
         conditional quantile normalization method.
