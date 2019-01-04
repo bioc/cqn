@@ -1,5 +1,5 @@
 Package: cqn
-Version: 1.29.0
+Version: 1.29.1
 Title: Conditional quantile normalization
 Description: A normalization tool for RNA-Seq data, implementing the
         conditional quantile normalization method.
@@ -11,4 +11,4 @@ Imports: splines
 Suggests: scales, edgeR
 License: Artistic-2.0
 LazyLoad: yes
-biocViews: RNASeq, Preprocessing, DifferentialExpression
+biocViews: ImmunoOncology, RNASeq, Preprocessing, DifferentialExpression
