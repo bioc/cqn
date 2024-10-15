@@ -262,7 +262,7 @@ structure, we would expect no differentially expression genes.
 Instead we get
 
 <<>>=
-summary(decideTestsDGE(elrt.cqn))
+summary(decideTests(elrt.cqn))
 @ 
 
 significantly differentially expressed at an FDR (false discovery
@@ -273,7 +273,7 @@ rate) of 5\%.  We may contrast this with the result of not using
 d.mont.std <- estimateGLMCommonDisp(d.mont, design = design)
 efit.std <- glmFit(d.mont.std, design = design)
 elrt.std <- glmLRT(efit.std, coef = 2)
-summary(decideTestsDGE(elrt.std))
+summary(decideTests(elrt.std))
 @ 
 
 In this evaluation, it is not clear that using CQN is better.

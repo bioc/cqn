@@ -1,3 +1,8 @@
-export(cqn, cqn.fixedlength, cqnplot)
 import(splines, nor1mix)
+importFrom("mclust", "Mclust")
+importFrom("quantreg", "rq")
+importFrom("graphics", "matplot", "rug")
+importFrom("stats", "coef", "ecdf", "median", "predict", "quantile",
+           "smooth.spline")
+export(cqn, cqn.fixedlength, cqnplot)
 S3method("print", "cqn")

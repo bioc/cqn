@@ -1,13 +1,12 @@
 Package: cqn
-Version: 1.51.0
+Version: 1.51.1
 Title: Conditional quantile normalization
 Description: A normalization tool for RNA-Seq data, implementing the
         conditional quantile normalization method.
 Author: Jean (Zhijin) Wu, Kasper Daniel Hansen
 Maintainer: Kasper Daniel Hansen <kasperdanielhansen@gmail.com>
-Depends: R (>= 2.10.0), mclust, nor1mix, stats, preprocessCore,
-        splines, quantreg
-Imports: splines
+Depends: R (>= 2.10.0), mclust
+Imports: splines, graphics, nor1mix, stats, quantreg
 Suggests: scales, edgeR
 License: Artistic-2.0
 LazyLoad: yes

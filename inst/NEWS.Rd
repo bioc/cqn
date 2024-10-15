@@ -2,6 +2,14 @@
 \title{CQN News}
 \encoding{UTF-8}
 
+\section{Version 1.51}{
+  \itemize{
+    \item Various small changes addressing changes in dependencies. For
+    example, decideTestsDGE got renamed to decideTests. Likewise, a number
+    of imports needed fixing.
+  }
+}
+
 \section{Version 1.5}{
   \itemize{
     \item THe output object from cqn() now has an additional component:
